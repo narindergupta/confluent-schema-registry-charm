@@ -114,4 +114,28 @@
     "type": "string"
     "description": |-
       Base 64 encodede string for registry properties tuning file.
-
+  ssl_cert:
+    type: string
+    default:
+    description: |
+      Base64-encoded SSL certificate to install and use for Horizon.
+      .
+      juju config confluent-schema-registry  ssl_cert="$(cat cert| base64)" \
+                               ssl_key="$(cat key| base64)"
+  ssl_key:
+    type: string
+    default:
+    description: |
+      Base64-encoded SSL key to use with certificate specified as ssl_cert.
+  ssl_ca:
+    type: string
+    default:
+    description: |
+      Base64-encoded certificate authority. This CA is used in conjunction
+      with keystone https endpoints and must, therefore, be the same CA
+      used by any endpoint configured as https/ssl.
+  ssl_key_password:
+    type: string
+    default:
+    description: |
+      SSL key password.
