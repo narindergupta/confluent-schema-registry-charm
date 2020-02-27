@@ -33,6 +33,12 @@ SCHEMA_REG_SERVICE = '{}.service'.format(SCHEMA_REG)
 SCHEMA_REG_DATA = '/etc/schema-registry/'
 SCHEMA_REG_CONF = '/lib/systemd/system/'
 SCHEMA_REG_PORT = 8081
+ca_crt_path = '/usr/local/share/ca-certificates/confluent-schema-registry.crt'
+cert_path = Path('/etc/schema-registry/')
+server_crt_path = cert_path / 'server.crt'
+server_key_path = cert_path / 'server.key'
+client_crt_path = cert_path / 'client.crt'
+client_key_path = cert_path / 'client.key'
 
 
 class confluent_schema_registry(object):
@@ -138,11 +144,15 @@ def keystore_password():
         SCHEMA_REG_DATA,
         'keystore.secret'
     )
+    config = hookenv.config()
     if not os.path.isfile(path):
         with os.fdopen(
                 os.open(path, os.O_WRONLY | os.O_CREAT, 0o440),
                 'wb') as f:
-            token = b64encode(os.urandom(32))
+            if config['ssl_key_password']:
+                token = config['ssl_key_password'].encode("utf-8")
+            else:
+                token = b64encode(os.urandom(32))
             f.write(token)
             password = token.decode('ascii')
     else:
@@ -214,3 +224,41 @@ def get_ssl_certificate(self):
 
     # Return the base64 encoded pem.
     return [base64.b64encode(decoded_pem)]
+
+
+def resolve_private_address(addr):
+    IP_pat = re.compile(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}')
+    contains_IP_pat = re.compile(r'\d{1,3}[-.]\d{1,3}[-.]\d{1,3}[-.]\d{1,3}')
+    if IP_pat.match(addr):
+        return addr  # already IP
+    try:
+        ip = socket.gethostbyname(addr)
+        return ip
+    except socket.error as e:
+        hookenv.log(
+            'Unable to resolve private IP: %s (will attempt to guess)' %
+            addr,
+            hookenv.ERROR
+        )
+        hookenv.log('%s' % e, hookenv.ERROR)
+        contained = contains_IP_pat.search(addr)
+        if not contained:
+            raise ValueError(
+                'Unable to resolve private-address: {}'.format(addr)
+            )
+        return contained.groups(0).replace('-', '.')
+
+
+def get_ingress_address(binding):
+    try:
+        network_info = hookenv.network_get(binding)
+    except NotImplementedError:
+        network_info = []
+
+    if network_info and 'ingress-addresses' in network_info:
+        # just grab the first one for now, maybe be more robust here?
+        return network_info['ingress-addresses'][0]
+    else:
+        # if they don't have ingress-addresses they are running a juju that
+        # doesn't support spaces, so just return the private address
+        return hookenv.unit_get('private-address')

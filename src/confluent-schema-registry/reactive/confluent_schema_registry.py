@@ -13,14 +13,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from charms.layer.confluent_schema_registry import (confluent_schema_registry,
-                                                SCHEMA_REG_PORT)
-
+import os, sys, stat
+import socket
+import json
+import base64
+import tempfile
+from OpenSSL import crypto
+from subprocess import check_call
+from pathlib import Path
 from charmhelpers.core import hookenv, unitdata
 
-from charms.reactive import (when, when_not, hook, set_flag,
-                             remove_state, set_state)
+from charms.reactive import (when, when_not, hook, when_file_changed,
+                             remove_state, set_state, endpoint_from_flag,
+                             set_flag)
+from charms.layer import tls_client
 from charms.reactive.helpers import data_changed
+from charmhelpers.core.hookenv import log
+from charms.layer.confluent_schema_registry import (keystore_password,
+                             ca_crt_path, server_crt_path, server_key_path,
+                             client_crt_path, client_key_path,
+                             confluent_schema_registry, SCHEMA_REG_PORT,
+                             SCHEMA_REG_DATA)
 
 
 @when('apt.installed.confluent-schema-registry')
