@@ -45,6 +45,9 @@ def waiting_for_zookeeper():
 @when('apt.installed.confluent-schema-registry', 'zookeeper.joined')
 @when_not('confluent_schema_registry.started', 'zookeeper.ready')
 def waiting_for_zookeeper_ready(zk):
+    schemareg = confluent_schema_registry()
+    schemareg.install()
+    schemareg.daemon_reload()
     hookenv.status_set('waiting', 'waiting for zookeeper to become ready')
 
 
@@ -77,14 +80,18 @@ def waiting_for_certificates():
 def configure_confluent_schema_registry(zk):
     hookenv.status_set('maintenance', 'setting up confluent_schema_registry')
     confluentregistry = confluent_schema_registry()
+    if confluentregistry.is_running():
+        confluentregistry.stop()
     zks = zk.zookeepers()
     confluentregistry.install(zk_units=zks)
+    if not confluentregistry.is_running():
+        confluentregistry.start()
     hookenv.open_port(SCHEMA_REG_PORT)
-    set_state('confluent_schema_registry.started')
-    hookenv.status_set('active', 'ready')
     # set app version string for juju status output
     confluentregistryversion = confluentregistry.version()
     hookenv.application_version_set(confluentregistryversion)
+    hookenv.status_set('active', 'ready')
+    set_state('confluent_schema_registry.started')
 
 
 @when('config.changed', 'zookeeper.ready')
@@ -95,6 +102,7 @@ def config_changed(zk):
             # Trigger a reconfig of nagios if relation established
             remove_state('confluent_schema_registry.nrpe_helper.registered')
     # Something must have changed if this hook fired, trigger reconfig
+    remove_state('config.changed')
     remove_state('confluent_schema_registry.started')
 
 
@@ -112,7 +120,11 @@ def configure_confluent_schema_registry_zookeepers(zk):
     hookenv.log('Checking Zookeeper configuration')
     hookenv.status_set('maintenance', 'updating zookeeper instances')
     kafkareg = confluent_schema_registry()
-    kafkareg.install(zk_units=zks)
+    if kafkareg.is_running():
+        kafkareg.stop()
+    kafkareg.install(zk_units=zks, log_dir=log_dir)
+    if not kafkareg.is_running():
+        kafkareg.start()
     hookenv.status_set('active', 'ready')
 
 

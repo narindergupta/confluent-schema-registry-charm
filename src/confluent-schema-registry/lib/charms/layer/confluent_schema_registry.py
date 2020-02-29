@@ -31,8 +31,9 @@ from charms import apt
 SCHEMA_REG = 'confluent-schema-registry'
 SCHEMA_REG_SERVICE = '{}.service'.format(SCHEMA_REG)
 SCHEMA_REG_DATA = '/etc/schema-registry/'
-SCHEMA_REG_CONF = '/lib/systemd/system/'
 SCHEMA_REG_PORT = 8081
+SCHEMA_REG_SVC_CONF = '/etc/systemd/system/{}.d'.format(SCHEMA_REG_SERVICE)
+SCHEMA_REG_BIN = '/usr/bin/'
 ca_crt_path = '/usr/local/share/ca-certificates/confluent-schema-registry.crt'
 cert_path = Path('/etc/schema-registry/')
 server_crt_path = cert_path / 'server.crt'
@@ -74,13 +75,36 @@ class confluent_schema_registry(object):
             'reghostname': hookenv.unit_private_ip(),
             'kafka_bootstrap': config['kafka_bootstrap'],
             'listeners': config['web_listen_uri'],
+            'jmx_port': config['jmx_port'],
+            'service_environment': config['service_environment'],
         }
 
+        for file_config in ('schema-registry.properties', 'broker.env'):
+            render(
+                source=file_config,
+                target=os.path.join(SCHEMA_REG_DATA, file_config),
+                owner='root',
+                perms=0o644,
+                context=context
+            )
+
+        os.makedirs(SCHEMA_REG_SVC_CONF, mode=0o644, exist_ok=True)
+        shutil.chown(SCHEMA_REG_SVC_CONF, user='root')
+
         render(
-            source='schema-registry.properties',
-            target=os.path.join(SCHEMA_REG_DATA, 'schema-registry.properties'),
+            source='override.conf',
+            target=os.path.join(SCHEMA_REG_SVC_CONF,
+                                'confluent-schema-registry.service.conf'),
             owner='root',
             perms=0o644,
+            context=context
+        )
+
+        render(
+            source='schema-registry-wrapper.sh',
+            target=os.path.join(SCHEMA_REG_BIN, 'schema-registry-wrapper.sh'),
+            owner='root',
+            perms=0o755,
             context=context
         )
 
@@ -89,26 +113,34 @@ class confluent_schema_registry(object):
             outfile.write(extraconfig)
             outfile.close()
 
-        self.restart()
+    def daemon_reload(self):
+        '''
+        Run Daemon Reload needed whenever there is change in system service.
+        '''
+        host.service("daemon-reload","")
 
     def restart(self):
         '''
-        Restarts the registry service.
+        Restarts the Registry service.
         '''
         host.service_restart(SCHEMA_REG_SERVICE)
 
     def start(self):
         '''
-        Starts the registry service.
+        Starts the Registry service.
         '''
-        host.service_reload(SCHEMA_REG_SERVICE)
+        if self.is_running():
+            host.service_reload(SCHEMA_REG_SERVICE)
+        else:
+            host.service_start(SCHEMA_REG_SERVICE)
 
     def stop(self):
         '''
-        Stops the registry service.
+        Stops the Registry service.
 
         '''
-        host.service_stop(SCHEMA_REG_SERVICE)
+        if self.is_running():
+            host.service_stop(SCHEMA_REG_SERVICE)
 
     def is_running(self):
         '''
