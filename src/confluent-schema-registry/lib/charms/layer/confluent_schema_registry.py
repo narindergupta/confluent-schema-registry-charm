@@ -77,6 +77,7 @@ class confluent_schema_registry(object):
             'listeners': config['web_listen_uri'],
             'jmx_port': config['jmx_port'],
             'service_environment': config['service_environment'],
+            'master_eligibility': config['master_eligibility']
         }
 
         for file_config in ('schema-registry.properties', 'broker.env'):

@@ -143,9 +143,18 @@
     type: string
     default: '-Xmx512M -Xms64M'
     description: |-
-      This option will define the kafka service environment will into service section.
+      This option will define the kafka service environment will into service
+      section.
   jmx_port:
     type: string
     default: '9999'
     description: |-
       Specify the port number of jmx server where clients can retries the data.
+  master_eligibility:
+    type: string
+    default: 'true'
+    description: |-
+      If true, this node can participate in primary election. In a
+      multi-colocated setup, turn this off for clusters in the secondary data
+      center This option will define the kafka service environment will into
+      service section.

@@ -122,7 +122,7 @@ def configure_confluent_schema_registry_zookeepers(zk):
     kafkareg = confluent_schema_registry()
     if kafkareg.is_running():
         kafkareg.stop()
-    kafkareg.install(zk_units=zks, log_dir=log_dir)
+    kafkareg.install(zk_units=zks)
     if not kafkareg.is_running():
         kafkareg.start()
     hookenv.status_set('active', 'ready')
