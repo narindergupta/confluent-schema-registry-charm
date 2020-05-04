@@ -1,0 +1,7 @@
+series: bionic
+services:
+  zookeeper:
+    charm:  cs:~narindergupta/zookeeper
+    num_units: 3
+    options:
+      install_keys: "622CF918"

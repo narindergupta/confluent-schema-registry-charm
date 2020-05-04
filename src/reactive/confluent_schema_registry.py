@@ -32,7 +32,7 @@ from charmhelpers.core.hookenv import log
 from charms.layer.confluent_schema_registry import (keystore_password,
                              ca_crt_path, server_crt_path, server_key_path,
                              client_crt_path, client_key_path,
-                             confluent_schema_registry, SCHEMA_REG_PORT,
+                             ConfluentSchemaRegistry, SCHEMA_REG_PORT,
                              SCHEMA_REG_DATA)
 
 
@@ -45,7 +45,7 @@ def waiting_for_zookeeper():
 @when('apt.installed.confluent-schema-registry', 'zookeeper.joined')
 @when_not('confluent_schema_registry.started', 'zookeeper.ready')
 def waiting_for_zookeeper_ready(zk):
-    schemareg = confluent_schema_registry()
+    schemareg = ConfluentSchemaRegistry()
     schemareg.install()
     schemareg.daemon_reload()
     hookenv.status_set('waiting', 'waiting for zookeeper to become ready')
@@ -79,7 +79,7 @@ def waiting_for_certificates():
 @when_not('confluent_schema_registry.started')
 def configure_confluent_schema_registry(zk):
     hookenv.status_set('maintenance', 'setting up confluent_schema_registry')
-    confluentregistry = confluent_schema_registry()
+    confluentregistry = ConfluentSchemaRegistry()
     if confluentregistry.is_running():
         confluentregistry.stop()
     zks = zk.zookeepers()
@@ -119,7 +119,7 @@ def configure_confluent_schema_registry_zookeepers(zk):
 
     hookenv.log('Checking Zookeeper configuration')
     hookenv.status_set('maintenance', 'updating zookeeper instances')
-    kafkareg = confluent_schema_registry()
+    kafkareg = ConfluentSchemaRegistry()
     if kafkareg.is_running():
         kafkareg.stop()
     kafkareg.install(zk_units=zks)
@@ -332,8 +332,8 @@ def send_data():
 @when_not('zookeeper.ready')
 def stop_kafka_waiting_for_zookeeper_ready():
     hookenv.status_set('maintenance', 'zookeeper not ready, stopping confluent_schema_registry')
-    confluent_schema_registry = confluent_schema_registry()
+    schemareg = ConfluentSchemaRegistry()
     hookenv.close_port(SCHEMA_REG_PORT)
-    confluent_schema_registry.stop()
+    schemareg.stop()
     remove_state('confluent_schema_registry.started')
     hookenv.status_set('waiting', 'waiting for zookeeper to become ready')

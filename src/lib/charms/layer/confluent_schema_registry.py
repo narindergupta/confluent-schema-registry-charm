@@ -42,7 +42,7 @@ client_crt_path = cert_path / 'client.crt'
 client_key_path = cert_path / 'client.key'
 
 
-class confluent_schema_registry(object):
+class ConfluentSchemaRegistry(object):
     def install(self, zk_units=[]):
         '''
         Generates schema-registry.properties with the current

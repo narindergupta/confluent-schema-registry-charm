@@ -33,7 +33,7 @@ This is experimental version of charm.
 # Configuration
 
 default configurations in the charm used to give you deployment and configuration
-out of box but you can change the configutation
+out of box but you can change the configuration
 juju config confulent-schema-registry
 
 # Contact Information
