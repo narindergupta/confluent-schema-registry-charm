@@ -1,7 +1,5 @@
 series: bionic
 services:
-  zookeeper:
-    charm:  cs:~narindergupta/zookeeper
-    num_units: 3
-    options:
-      install_keys: "622CF918"
+  confluent-schema-registry:
+    charm:  cs:~narindergupta/confluent-schema-registry
+    num_units: 1

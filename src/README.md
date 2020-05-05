@@ -19,10 +19,10 @@ in the Juju GUI.
 
 # Usage
 
-juju deploy confulent-schema-registry
-juju deploy -n 3 zookeeper
-juju deploy -n 3 kafka
-juju deploy easyrsa
+    juju deploy confulent-schema-registry
+    juju deploy -n 3 zookeeper
+    juju deploy -n 3 kafka
+    juju deploy easyrsa
 
 confulent-schema-registry listens on all IP address at port 8081.
 
@@ -34,7 +34,8 @@ This is experimental version of charm.
 
 default configurations in the charm used to give you deployment and configuration
 out of box but you can change the configuration
-juju config confulent-schema-registry
+
+    juju config confulent-schema-registry
 
 # Contact Information
 
