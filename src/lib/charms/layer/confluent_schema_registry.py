@@ -52,8 +52,12 @@ class ConfluentSchemaRegistry(object):
         for unit in zk_units or self.get_zks():
             ip = resolve_private_address(unit['host'])
             zks.append('%s:%s' % (ip, unit['port']))
-        zks.sort()
-        zk_connect = ','.join(zks)
+
+        if not zks:
+            return
+        else:
+            zks.sort()
+            zk_connect = ','.join(zks)
 
         config = hookenv.config()
 
@@ -73,7 +77,6 @@ class ConfluentSchemaRegistry(object):
                 'confluent_schema_registry.client.jks'
             ),
             'reghostname': hookenv.unit_private_ip(),
-            'kafka_bootstrap': config['kafka_bootstrap'],
             'listeners': config['web_listen_uri'],
             'jmx_port': config['jmx_port'],
             'service_environment': config['service_environment'],

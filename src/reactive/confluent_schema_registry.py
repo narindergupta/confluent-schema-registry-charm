@@ -45,9 +45,6 @@ def waiting_for_zookeeper():
 @when('apt.installed.confluent-schema-registry', 'zookeeper.joined')
 @when_not('confluent_schema_registry.started', 'zookeeper.ready')
 def waiting_for_zookeeper_ready(zk):
-    schemareg = ConfluentSchemaRegistry()
-    schemareg.install()
-    schemareg.daemon_reload()
     hookenv.status_set('waiting', 'waiting for zookeeper to become ready')
 
 
@@ -119,12 +116,12 @@ def configure_confluent_schema_registry_zookeepers(zk):
 
     hookenv.log('Checking Zookeeper configuration')
     hookenv.status_set('maintenance', 'updating zookeeper instances')
-    kafkareg = ConfluentSchemaRegistry()
-    if kafkareg.is_running():
-        kafkareg.stop()
-    kafkareg.install(zk_units=zks)
-    if not kafkareg.is_running():
-        kafkareg.start()
+    schemareg = ConfluentSchemaRegistry()
+    if schemareg.is_running():
+        schemareg.stop()
+    schemareg.install(zk_units=zks)
+    if not schemareg.is_running():
+        schemareg.start()
     hookenv.status_set('active', 'ready')
 
 
